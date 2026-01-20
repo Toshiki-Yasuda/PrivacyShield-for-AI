@@ -25,7 +25,9 @@
     "activeTab",
     "storage",
     "sidePanel",
-    "contextMenus"
+    "contextMenus",
+    "clipboardRead",
+    "clipboardWrite"
   ],
 
   "options_page": "options/index.html",
