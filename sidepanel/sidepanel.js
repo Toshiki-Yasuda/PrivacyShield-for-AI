@@ -25,6 +25,11 @@ const mappingSelect = document.getElementById('mappingSelect');
 const saveMappingBtn = document.getElementById('saveMappingBtn');
 const deleteMappingBtn = document.getElementById('deleteMappingBtn');
 
+// モーダルDOM要素
+const mappingModal = document.getElementById('mappingModal');
+const mappingList = document.getElementById('mappingList');
+const closeModalBtn = document.getElementById('closeModalBtn');
+
 // 現在のマッピング名（保存済みの場合）
 let currentMappingName = null;
 
@@ -109,6 +114,48 @@ function updateMappingStatus() {
     statusText.textContent = '対応表なし';
     currentMappingName = null;
   }
+}
+
+/**
+ * 対応表ビューアーモーダルを表示
+ */
+function showMappingModal() {
+  if (currentMappingTable.size === 0) {
+    showToast('対応表が空です', 'warning');
+    return;
+  }
+
+  // マッピングリストを生成
+  mappingList.innerHTML = '';
+
+  for (const [maskLabel, originalText] of currentMappingTable.entries()) {
+    const item = document.createElement('div');
+    item.className = 'mapping-item';
+    item.innerHTML = `
+      <span class="mapping-key">${escapeHtml(maskLabel)}</span>
+      <span class="mapping-arrow">→</span>
+      <span class="mapping-value">${escapeHtml(originalText)}</span>
+    `;
+    mappingList.appendChild(item);
+  }
+
+  mappingModal.classList.remove('hidden');
+}
+
+/**
+ * 対応表ビューアーモーダルを閉じる
+ */
+function hideMappingModal() {
+  mappingModal.classList.add('hidden');
+}
+
+/**
+ * HTMLエスケープ
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /**
@@ -584,16 +631,11 @@ async function init() {
   // 保存済みマッピングを読み込む
   await loadSavedMappings();
 
-  // イベントリスナーを設定
-  originalText.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(performMasking, 300);
-  });
-
-  maskedText.addEventListener('input', () => {
-    // 手動編集時はマッピングテーブルをクリアしない
-    // ユーザーが直接編集できるようにする
-  });
+  // 入力時の自動マスキングは無効（ボタン操作のみ）
+  // originalText.addEventListener('input', () => {
+  //   clearTimeout(debounceTimer);
+  //   debounceTimer = setTimeout(performMasking, 300);
+  // });
 
   pasteBtn.addEventListener('click', pasteFromClipboard);
   maskBtn.addEventListener('click', maskAndSave);
@@ -605,6 +647,13 @@ async function init() {
   saveMappingBtn.addEventListener('click', saveMapping);
   deleteMappingBtn.addEventListener('click', deleteMapping);
   mappingSelect.addEventListener('change', selectMapping);
+
+  // 対応表クリックでモーダル表示
+  mappingStatus.addEventListener('click', showMappingModal);
+  closeModalBtn.addEventListener('click', hideMappingModal);
+  mappingModal.addEventListener('click', (e) => {
+    if (e.target === mappingModal) hideMappingModal();
+  });
 
   // ダークモード・文字サイズのイベントリスナー
   darkModeBtn.addEventListener('click', toggleDarkMode);

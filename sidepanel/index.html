@@ -159,6 +159,21 @@
 
     <!-- トースト通知 -->
     <div id="toast" class="toast"></div>
+
+    <!-- 対応表ビューアーモーダル -->
+    <div id="mappingModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>対応表の内容</h3>
+          <button id="closeModalBtn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="mappingList" class="mapping-list">
+            <!-- 対応表の内容がここに表示される -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="../lib/masking-engine.js"></script>
