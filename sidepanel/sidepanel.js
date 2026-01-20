@@ -228,7 +228,7 @@ function restoreText() {
 }
 
 /**
- * AIの返答を復号化（クリップボードから貼り付けて復元）
+ * AIの返答を復号化（クリップボードまたはテキストエリアから）
  */
 async function decryptAIResponse() {
   if (currentMappingTable.size === 0) {
@@ -236,26 +236,40 @@ async function decryptAIResponse() {
     return;
   }
 
+  let textToDecrypt = '';
+
   try {
-    // クリップボードからテキストを取得
+    // まずクリップボードからテキストを取得を試みる
     const clipboardText = await navigator.clipboard.readText();
-
-    if (!clipboardText.trim()) {
-      showToast('クリップボードが空です', 'warning');
-      return;
+    if (clipboardText.trim()) {
+      textToDecrypt = clipboardText;
     }
-
-    // マスキング後エリアに貼り付け
-    maskedText.value = clipboardText;
-
-    // 復号化を実行
-    const restored = maskingEngine.restore(clipboardText, currentMappingTable);
-    maskedText.value = restored;
-
-    showToast('AIの返答を復号化しました', 'success');
   } catch (error) {
-    showToast('クリップボードの読み取りに失敗しました', 'error');
+    // クリップボードの読み取りに失敗した場合は無視
+    console.log('クリップボード読み取りスキップ:', error);
   }
+
+  // クリップボードが空の場合、右側のテキストエリアの内容を使用
+  if (!textToDecrypt) {
+    textToDecrypt = maskedText.value;
+  }
+
+  if (!textToDecrypt.trim()) {
+    showToast('復号化するテキストがありません。AIの返答をコピーするか、右側に貼り付けてください', 'warning');
+    return;
+  }
+
+  // 復号化を実行
+  const restored = maskingEngine.restore(textToDecrypt, currentMappingTable);
+
+  // 結果が変わったかチェック
+  if (restored === textToDecrypt) {
+    showToast('復号化対象のマスク（[Person_A]等）が見つかりませんでした', 'warning');
+    return;
+  }
+
+  maskedText.value = restored;
+  showToast('復号化しました', 'success');
 }
 
 /**
