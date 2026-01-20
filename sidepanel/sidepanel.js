@@ -12,6 +12,20 @@ const restoreBtn = document.getElementById('restoreBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const toast = document.getElementById('toast');
 
+// 新しいDOM要素
+const darkModeBtn = document.getElementById('darkModeBtn');
+const fontSizeUp = document.getElementById('fontSizeUp');
+const fontSizeDown = document.getElementById('fontSizeDown');
+const fontSizeLabel = document.getElementById('fontSizeLabel');
+
+// 文字サイズ設定
+const fontSizes = ['small', 'medium', 'large', 'xlarge'];
+const fontSizeLabels = { small: '小', medium: '中', large: '大', xlarge: '特大' };
+let currentFontSizeIndex = 1; // デフォルトはmedium
+
+// ダークモード状態
+let isDarkMode = false;
+
 // 統計表示要素
 const statElements = {
   name: document.getElementById('statName'),
@@ -181,6 +195,107 @@ function openSettings() {
 }
 
 /**
+ * ダークモードを切り替え
+ */
+function toggleDarkMode() {
+  isDarkMode = !isDarkMode;
+  applyDarkMode();
+  savePanelSettings();
+}
+
+/**
+ * ダークモードを適用
+ */
+function applyDarkMode() {
+  if (isDarkMode) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    darkModeBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    `;
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    darkModeBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    `;
+  }
+}
+
+/**
+ * 文字サイズを大きく
+ */
+function increaseFontSize() {
+  if (currentFontSizeIndex < fontSizes.length - 1) {
+    currentFontSizeIndex++;
+    applyFontSize();
+    savePanelSettings();
+  }
+}
+
+/**
+ * 文字サイズを小さく
+ */
+function decreaseFontSize() {
+  if (currentFontSizeIndex > 0) {
+    currentFontSizeIndex--;
+    applyFontSize();
+    savePanelSettings();
+  }
+}
+
+/**
+ * 文字サイズを適用
+ */
+function applyFontSize() {
+  const size = fontSizes[currentFontSizeIndex];
+  document.documentElement.setAttribute('data-font-size', size);
+  fontSizeLabel.textContent = fontSizeLabels[size];
+}
+
+/**
+ * パネル設定を保存
+ */
+async function savePanelSettings() {
+  try {
+    await chrome.storage.sync.set({
+      panelDarkMode: isDarkMode,
+      panelFontSize: currentFontSizeIndex
+    });
+  } catch (error) {
+    console.error('設定の保存に失敗:', error);
+  }
+}
+
+/**
+ * パネル設定を読み込み
+ */
+async function loadPanelSettings() {
+  try {
+    const { panelDarkMode = false, panelFontSize = 1 } = await chrome.storage.sync.get([
+      'panelDarkMode',
+      'panelFontSize'
+    ]);
+    isDarkMode = panelDarkMode;
+    currentFontSizeIndex = panelFontSize;
+    applyDarkMode();
+    applyFontSize();
+  } catch (error) {
+    console.error('設定の読み込みに失敗:', error);
+  }
+}
+
+/**
  * バックグラウンドからのメッセージを処理
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -247,6 +362,9 @@ async function loadCustomPatterns() {
  * 初期化
  */
 async function init() {
+  // パネル設定を読み込む（ダークモード・文字サイズ）
+  await loadPanelSettings();
+
   // カスタムパターンを読み込む
   await loadCustomPatterns();
 
@@ -266,6 +384,11 @@ async function init() {
   clearBtn.addEventListener('click', clearText);
   restoreBtn.addEventListener('click', restoreText);
   settingsBtn.addEventListener('click', openSettings);
+
+  // ダークモード・文字サイズのイベントリスナー
+  darkModeBtn.addEventListener('click', toggleDarkMode);
+  fontSizeUp.addEventListener('click', increaseFontSize);
+  fontSizeDown.addEventListener('click', decreaseFontSize);
 
   // バックグラウンドに準備完了を通知
   chrome.runtime.sendMessage({ type: 'SIDEPANEL_READY' }).catch(() => {});
