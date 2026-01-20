@@ -8,7 +8,7 @@ const maskedText = document.getElementById('maskedText');
 const pasteBtn = document.getElementById('pasteBtn');
 const copyBtn = document.getElementById('copyBtn');
 const clearBtn = document.getElementById('clearBtn');
-const restoreBtn = document.getElementById('restoreBtn');
+const decryptBtn = document.getElementById('decryptBtn');
 const settingsBtn = document.getElementById('settingsBtn');
 const toast = document.getElementById('toast');
 
@@ -17,6 +17,11 @@ const darkModeBtn = document.getElementById('darkModeBtn');
 const fontSizeUp = document.getElementById('fontSizeUp');
 const fontSizeDown = document.getElementById('fontSizeDown');
 const fontSizeLabel = document.getElementById('fontSizeLabel');
+
+// マッピング管理DOM要素
+const mappingSelect = document.getElementById('mappingSelect');
+const saveMappingBtn = document.getElementById('saveMappingBtn');
+const deleteMappingBtn = document.getElementById('deleteMappingBtn');
 
 // 文字サイズ設定
 const fontSizes = ['small', 'medium', 'large', 'xlarge'];
@@ -185,6 +190,163 @@ function restoreText() {
   const restored = maskingEngine.restore(maskedText.value, currentMappingTable);
   maskedText.value = restored;
   showToast('復元しました', 'success');
+}
+
+/**
+ * AIの返答を復号化（クリップボードから貼り付けて復元）
+ */
+async function decryptAIResponse() {
+  if (currentMappingTable.size === 0) {
+    showToast('対応表がありません。先にマスキングを行うか、保存済みの対応表を選択してください', 'warning');
+    return;
+  }
+
+  try {
+    // クリップボードからテキストを取得
+    const clipboardText = await navigator.clipboard.readText();
+
+    if (!clipboardText.trim()) {
+      showToast('クリップボードが空です', 'warning');
+      return;
+    }
+
+    // マスキング後エリアに貼り付け
+    maskedText.value = clipboardText;
+
+    // 復号化を実行
+    const restored = maskingEngine.restore(clipboardText, currentMappingTable);
+    maskedText.value = restored;
+
+    showToast('AIの返答を復号化しました', 'success');
+  } catch (error) {
+    showToast('クリップボードの読み取りに失敗しました', 'error');
+  }
+}
+
+/**
+ * マッピングを保存
+ */
+async function saveMapping() {
+  if (currentMappingTable.size === 0) {
+    showToast('保存する対応表がありません', 'warning');
+    return;
+  }
+
+  try {
+    // 保存済みマッピング一覧を取得
+    const { savedMappings = [] } = await chrome.storage.local.get('savedMappings');
+
+    // 新しいマッピングを作成
+    const timestamp = new Date();
+    const name = timestamp.toLocaleString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const newMapping = {
+      id: Date.now().toString(),
+      name: name,
+      createdAt: timestamp.toISOString(),
+      mappingTable: Object.fromEntries(currentMappingTable),
+      itemCount: currentMappingTable.size
+    };
+
+    // 最大10件まで保存（古いものを削除）
+    const updatedMappings = [newMapping, ...savedMappings].slice(0, 10);
+
+    await chrome.storage.local.set({ savedMappings: updatedMappings });
+
+    // ドロップダウンを更新
+    await loadSavedMappings();
+
+    // 保存したマッピングを選択状態に
+    mappingSelect.value = newMapping.id;
+
+    showToast(`対応表を保存しました（${currentMappingTable.size}件）`, 'success');
+  } catch (error) {
+    console.error('マッピング保存エラー:', error);
+    showToast('保存に失敗しました', 'error');
+  }
+}
+
+/**
+ * 保存済みマッピング一覧を読み込む
+ */
+async function loadSavedMappings() {
+  try {
+    const { savedMappings = [] } = await chrome.storage.local.get('savedMappings');
+
+    // ドロップダウンをクリア（最初のオプション以外）
+    while (mappingSelect.options.length > 1) {
+      mappingSelect.remove(1);
+    }
+
+    // 保存済みマッピングを追加
+    for (const mapping of savedMappings) {
+      const option = document.createElement('option');
+      option.value = mapping.id;
+      option.textContent = `${mapping.name} (${mapping.itemCount}件)`;
+      mappingSelect.appendChild(option);
+    }
+  } catch (error) {
+    console.error('マッピング読み込みエラー:', error);
+  }
+}
+
+/**
+ * マッピングを選択して適用
+ */
+async function selectMapping() {
+  const selectedId = mappingSelect.value;
+
+  if (!selectedId) {
+    // 選択解除の場合は現在のマッピングをクリアしない
+    return;
+  }
+
+  try {
+    const { savedMappings = [] } = await chrome.storage.local.get('savedMappings');
+    const mapping = savedMappings.find(m => m.id === selectedId);
+
+    if (mapping) {
+      // マッピングテーブルを復元
+      currentMappingTable = new Map(Object.entries(mapping.mappingTable));
+      showToast(`対応表を読み込みました（${currentMappingTable.size}件）`, 'success');
+    }
+  } catch (error) {
+    console.error('マッピング選択エラー:', error);
+    showToast('読み込みに失敗しました', 'error');
+  }
+}
+
+/**
+ * 選択したマッピングを削除
+ */
+async function deleteMapping() {
+  const selectedId = mappingSelect.value;
+
+  if (!selectedId) {
+    showToast('削除する対応表を選択してください', 'warning');
+    return;
+  }
+
+  try {
+    const { savedMappings = [] } = await chrome.storage.local.get('savedMappings');
+    const updatedMappings = savedMappings.filter(m => m.id !== selectedId);
+
+    await chrome.storage.local.set({ savedMappings: updatedMappings });
+
+    // ドロップダウンを更新
+    await loadSavedMappings();
+    mappingSelect.value = '';
+
+    showToast('対応表を削除しました', 'success');
+  } catch (error) {
+    console.error('マッピング削除エラー:', error);
+    showToast('削除に失敗しました', 'error');
+  }
 }
 
 /**
@@ -368,6 +530,9 @@ async function init() {
   // カスタムパターンを読み込む
   await loadCustomPatterns();
 
+  // 保存済みマッピングを読み込む
+  await loadSavedMappings();
+
   // イベントリスナーを設定
   originalText.addEventListener('input', () => {
     clearTimeout(debounceTimer);
@@ -382,8 +547,13 @@ async function init() {
   pasteBtn.addEventListener('click', pasteFromClipboard);
   copyBtn.addEventListener('click', copyMaskedText);
   clearBtn.addEventListener('click', clearText);
-  restoreBtn.addEventListener('click', restoreText);
+  decryptBtn.addEventListener('click', decryptAIResponse);
   settingsBtn.addEventListener('click', openSettings);
+
+  // マッピング管理のイベントリスナー
+  saveMappingBtn.addEventListener('click', saveMapping);
+  deleteMappingBtn.addEventListener('click', deleteMapping);
+  mappingSelect.addEventListener('change', selectMapping);
 
   // ダークモード・文字サイズのイベントリスナー
   darkModeBtn.addEventListener('click', toggleDarkMode);

@@ -305,6 +305,81 @@ body {
   color: var(--warning-color);
 }
 
+/* マッピング管理バー */
+.mapping-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--panel-bg);
+  border-top: 1px solid var(--border-color);
+  gap: 8px;
+}
+
+.mapping-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.mapping-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.mapping-select {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 200px;
+}
+
+.mapping-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.mapping-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.mapping-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mapping-btn:hover {
+  background-color: var(--border-color);
+}
+
+.mapping-btn.danger {
+  padding: 6px 8px;
+}
+
+.mapping-btn.danger:hover {
+  background-color: var(--error-color);
+  border-color: var(--error-color);
+  color: white;
+}
+
 /* フッター */
 .footer {
   display: flex;
@@ -346,6 +421,15 @@ body {
 
 .action-btn.secondary:hover {
   background-color: var(--border-color);
+}
+
+.action-btn.success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.action-btn.success:hover {
+  background-color: #059669;
 }
 
 .action-btn:disabled {
