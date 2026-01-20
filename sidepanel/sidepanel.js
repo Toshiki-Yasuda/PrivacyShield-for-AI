@@ -19,9 +19,14 @@ const fontSizeDown = document.getElementById('fontSizeDown');
 const fontSizeLabel = document.getElementById('fontSizeLabel');
 
 // マッピング管理DOM要素
+const mappingBar = document.getElementById('mappingBar');
+const mappingStatus = document.getElementById('mappingStatus');
 const mappingSelect = document.getElementById('mappingSelect');
 const saveMappingBtn = document.getElementById('saveMappingBtn');
 const deleteMappingBtn = document.getElementById('deleteMappingBtn');
+
+// 現在のマッピング名（保存済みの場合）
+let currentMappingName = null;
 
 // 文字サイズ設定
 const fontSizes = ['small', 'medium', 'large', 'xlarge'];
@@ -59,12 +64,16 @@ function performMasking() {
     maskedText.value = '';
     updateStats({});
     currentMappingTable = new Map();
+    currentMappingName = null;
+    updateMappingStatus();
     return;
   }
 
   const result = maskingEngine.mask(text);
   maskedText.value = result.maskedText;
   currentMappingTable = result.mappingTable;
+  currentMappingName = null; // 新規マスキングなので名前をリセット
+  updateMappingStatus();
 
   // 統計を更新
   const stats = maskingEngine.getStatistics(result.detections);
@@ -76,6 +85,30 @@ function performMasking() {
     maskedText: result.maskedText,
     detections: result.detections
   });
+}
+
+/**
+ * マッピング状態表示を更新
+ */
+function updateMappingStatus() {
+  const count = currentMappingTable.size;
+  const statusIcon = mappingStatus.querySelector('.status-icon');
+  const statusText = mappingStatus.querySelector('.status-text');
+
+  if (count > 0) {
+    mappingBar.classList.add('active');
+    statusIcon.textContent = '🔐';
+    if (currentMappingName) {
+      statusText.textContent = `${currentMappingName} (${count}件)`;
+    } else {
+      statusText.textContent = `対応表あり (${count}件)`;
+    }
+  } else {
+    mappingBar.classList.remove('active');
+    statusIcon.textContent = '🔓';
+    statusText.textContent = '対応表なし';
+    currentMappingName = null;
+  }
 }
 
 /**
@@ -174,7 +207,9 @@ function clearText() {
   originalText.value = '';
   maskedText.value = '';
   currentMappingTable = new Map();
+  currentMappingName = null;
   updateStats({});
+  updateMappingStatus();
   showToast('クリアしました', 'success');
 }
 
@@ -263,6 +298,8 @@ async function saveMapping() {
 
     // 保存したマッピングを選択状態に
     mappingSelect.value = newMapping.id;
+    currentMappingName = newMapping.name;
+    updateMappingStatus();
 
     showToast(`対応表を保存しました（${currentMappingTable.size}件）`, 'success');
   } catch (error) {
@@ -313,6 +350,8 @@ async function selectMapping() {
     if (mapping) {
       // マッピングテーブルを復元
       currentMappingTable = new Map(Object.entries(mapping.mappingTable));
+      currentMappingName = mapping.name;
+      updateMappingStatus();
       showToast(`対応表を読み込みました（${currentMappingTable.size}件）`, 'success');
     }
   } catch (error) {
