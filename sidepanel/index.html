@@ -44,10 +44,10 @@
     <main class="main">
       <!-- 左右分割ビュー -->
       <div class="split-view">
-        <!-- オリジナルテキスト -->
-        <div class="panel original-panel">
+        <!-- 入力パネル -->
+        <div class="panel input-panel">
           <div class="panel-header">
-            <span class="panel-label">オリジナル</span>
+            <span class="panel-label">入力</span>
             <button id="pasteBtn" class="small-btn" title="クリップボードから貼り付け">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
@@ -55,16 +55,21 @@
               </svg>
             </button>
           </div>
-          <textarea id="originalText" placeholder="マスキングしたいテキストを入力またはペースト..."></textarea>
+          <textarea id="originalText" placeholder="テキストを入力...&#10;・マスキング：個人情報を含むテキスト&#10;・復号化：AIの返答（[Person_A]等を含む）"></textarea>
         </div>
 
-        <!-- マスキング後テキスト -->
-        <div class="panel masked-panel">
+        <!-- 矢印 -->
+        <div class="flow-arrow">
+          <span class="arrow-icon">→</span>
+        </div>
+
+        <!-- 出力パネル -->
+        <div class="panel output-panel">
           <div class="panel-header">
-            <span class="panel-label">マスキング後</span>
+            <span class="panel-label">出力</span>
             <span class="edit-hint">(編集可能)</span>
           </div>
-          <textarea id="maskedText" placeholder="マスキング結果がここに表示されます..."></textarea>
+          <textarea id="maskedText" placeholder="処理結果がここに表示されます..."></textarea>
         </div>
       </div>
 
@@ -129,14 +134,14 @@
 
     <!-- アクションボタン -->
     <footer class="footer">
-      <button id="copyBtn" class="action-btn primary" title="マスキング済みテキストをコピー">
+      <button id="maskBtn" class="action-btn primary" title="マスキング実行 → 対応表保存 → コピー">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
         </svg>
-        コピー
+        マスキング
       </button>
-      <button id="decryptBtn" class="action-btn success" title="AIの返答を復号化（対応表を使って元に戻す）">
+      <button id="decryptBtn" class="action-btn success" title="左側のテキストを復号化して右側に出力">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>

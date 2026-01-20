@@ -6,7 +6,7 @@
 const originalText = document.getElementById('originalText');
 const maskedText = document.getElementById('maskedText');
 const pasteBtn = document.getElementById('pasteBtn');
-const copyBtn = document.getElementById('copyBtn');
+const maskBtn = document.getElementById('maskBtn');
 const clearBtn = document.getElementById('clearBtn');
 const decryptBtn = document.getElementById('decryptBtn');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -183,20 +183,32 @@ async function pasteFromClipboard() {
 }
 
 /**
- * マスキング済みテキストをコピー
+ * マスキング実行 → 対応表保存 → コピー
  */
-async function copyMaskedText() {
-  const text = maskedText.value;
+async function maskAndSave() {
+  const text = originalText.value;
+
   if (!text.trim()) {
-    showToast('コピーするテキストがありません', 'warning');
+    showToast('マスキングするテキストを入力してください', 'warning');
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast('コピーしました', 'success');
-  } catch (error) {
-    showToast('コピーに失敗しました', 'error');
+  // マスキング実行
+  performMasking();
+
+  // 対応表がある場合は自動保存
+  if (currentMappingTable.size > 0) {
+    await saveMapping();
+
+    // クリップボードにコピー
+    try {
+      await navigator.clipboard.writeText(maskedText.value);
+      showToast('マスキング → 保存 → コピー完了', 'success');
+    } catch (error) {
+      showToast('マスキング → 保存完了（コピー失敗）', 'warning');
+    }
+  } else {
+    showToast('マスキング対象が見つかりませんでした', 'warning');
   }
 }
 
@@ -228,34 +240,19 @@ function restoreText() {
 }
 
 /**
- * AIの返答を復号化（クリップボードまたはテキストエリアから）
+ * 復号化実行（左側入力 → 右側出力）
  */
 async function decryptAIResponse() {
   if (currentMappingTable.size === 0) {
-    showToast('対応表がありません。先にマスキングを行うか、保存済みの対応表を選択してください', 'warning');
+    showToast('対応表がありません。保存済みの対応表を選択してください', 'warning');
     return;
   }
 
-  let textToDecrypt = '';
-
-  try {
-    // まずクリップボードからテキストを取得を試みる
-    const clipboardText = await navigator.clipboard.readText();
-    if (clipboardText.trim()) {
-      textToDecrypt = clipboardText;
-    }
-  } catch (error) {
-    // クリップボードの読み取りに失敗した場合は無視
-    console.log('クリップボード読み取りスキップ:', error);
-  }
-
-  // クリップボードが空の場合、右側のテキストエリアの内容を使用
-  if (!textToDecrypt) {
-    textToDecrypt = maskedText.value;
-  }
+  // 左側のテキストを取得
+  const textToDecrypt = originalText.value;
 
   if (!textToDecrypt.trim()) {
-    showToast('復号化するテキストがありません。AIの返答をコピーするか、右側に貼り付けてください', 'warning');
+    showToast('左側にAIの返答を入力してください', 'warning');
     return;
   }
 
@@ -268,6 +265,7 @@ async function decryptAIResponse() {
     return;
   }
 
+  // 右側に出力
   maskedText.value = restored;
   showToast('復号化しました', 'success');
 }
@@ -598,7 +596,7 @@ async function init() {
   });
 
   pasteBtn.addEventListener('click', pasteFromClipboard);
-  copyBtn.addEventListener('click', copyMaskedText);
+  maskBtn.addEventListener('click', maskAndSave);
   clearBtn.addEventListener('click', clearText);
   decryptBtn.addEventListener('click', decryptAIResponse);
   settingsBtn.addEventListener('click', openSettings);
