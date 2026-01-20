@@ -96,10 +96,22 @@ body {
   height: 24px;
 }
 
+.title-text {
+  display: flex;
+  flex-direction: column;
+}
+
 .header h1 {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-color);
+  line-height: 1.2;
+}
+
+.header .subtitle {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .icon-btn {
