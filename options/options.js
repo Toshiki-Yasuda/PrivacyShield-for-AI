@@ -15,6 +15,7 @@ const importInput = document.getElementById('importInput');
 const resetBtn = document.getElementById('resetBtn');
 const saveBtn = document.getElementById('saveBtn');
 const saveStatus = document.getElementById('saveStatus');
+const closePageBtn = document.getElementById('closePageBtn');
 
 // モーダル要素
 const patternModal = document.getElementById('patternModal');
@@ -392,6 +393,22 @@ async function resetSettings() {
 }
 
 /**
+ * ページを閉じる
+ */
+async function closePage() {
+  try {
+    // Chrome拡張機能APIでタブを閉じる
+    const tab = await chrome.tabs.getCurrent();
+    if (tab?.id) {
+      await chrome.tabs.remove(tab.id);
+    }
+  } catch (error) {
+    // フォールバック: window.closeを試行
+    window.close();
+  }
+}
+
+/**
  * HTMLエスケープ
  */
 function escapeHtml(text) {
@@ -419,6 +436,7 @@ function init() {
   importInput.addEventListener('change', handleImport);
   resetBtn.addEventListener('click', resetSettings);
   saveBtn.addEventListener('click', saveSettings);
+  closePageBtn.addEventListener('click', closePage);
 
   // モーダル外クリックで閉じる
   patternModal.addEventListener('click', (e) => {

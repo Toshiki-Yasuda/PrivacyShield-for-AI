@@ -381,6 +381,28 @@ body {
 .save-status {
   font-size: 13px;
   color: var(--success-color);
+  flex: 1;
+}
+
+.close-page-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: var(--bg-color);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.close-page-btn:hover {
+  background-color: var(--border-color);
+  color: var(--text-color);
 }
 
 /* モーダル */
