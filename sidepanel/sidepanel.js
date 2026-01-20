@@ -230,7 +230,7 @@ async function pasteFromClipboard() {
 }
 
 /**
- * マスキング実行 → 対応表保存 → コピー
+ * マスキング実行 → 名前入力 → 対応表保存 → コピー
  */
 async function maskAndSave() {
   const text = originalText.value;
@@ -243,16 +243,56 @@ async function maskAndSave() {
   // マスキング実行
   performMasking();
 
-  // 対応表がある場合は自動保存
+  // 対応表がある場合は名前を入力して保存
   if (currentMappingTable.size > 0) {
-    await saveMapping();
+    // 名前入力ダイアログ
+    const defaultName = new Date().toLocaleString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const inputName = prompt('対応表の名前を入力してください:', defaultName);
 
-    // クリップボードにコピー
+    if (inputName === null) {
+      // キャンセル時はコピーのみ
+      try {
+        await navigator.clipboard.writeText(maskedText.value);
+        showToast('マスキング → コピー完了（保存なし）', 'success');
+      } catch (error) {
+        showToast('マスキング完了（コピー失敗）', 'warning');
+      }
+      return;
+    }
+
+    const name = inputName.trim() || defaultName;
+
+    // 保存処理
     try {
+      const { savedMappings = [] } = await chrome.storage.local.get('savedMappings');
+
+      const newMapping = {
+        id: Date.now().toString(),
+        name: name,
+        createdAt: new Date().toISOString(),
+        mappingTable: Object.fromEntries(currentMappingTable),
+        itemCount: currentMappingTable.size
+      };
+
+      const updatedMappings = [newMapping, ...savedMappings].slice(0, 10);
+      await chrome.storage.local.set({ savedMappings: updatedMappings });
+      await loadSavedMappings();
+
+      mappingSelect.value = newMapping.id;
+      currentMappingName = newMapping.name;
+      updateMappingStatus();
+
+      // クリップボードにコピー
       await navigator.clipboard.writeText(maskedText.value);
-      showToast('マスキング → 保存 → コピー完了', 'success');
+      showToast(`「${name}」保存 → コピー完了`, 'success');
     } catch (error) {
-      showToast('マスキング → 保存完了（コピー失敗）', 'warning');
+      console.error('保存エラー:', error);
+      showToast('保存に失敗しました', 'error');
     }
   } else {
     showToast('マスキング対象が見つかりませんでした', 'warning');
@@ -318,31 +358,49 @@ async function decryptAIResponse() {
 }
 
 /**
- * マッピングを保存
+ * マッピングを保存（名前入力付き）
  */
-async function saveMapping() {
+async function saveMapping(autoName = null) {
   if (currentMappingTable.size === 0) {
     showToast('保存する対応表がありません', 'warning');
     return;
+  }
+
+  // 名前を決定
+  let name;
+  if (autoName) {
+    // 自動保存時は日時を名前に
+    const timestamp = new Date();
+    name = timestamp.toLocaleString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } else {
+    // 手動保存時は名前を入力
+    const defaultName = new Date().toLocaleString('ja-JP', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const inputName = prompt('対応表の名前を入力してください:', defaultName);
+    if (inputName === null) {
+      // キャンセル
+      return;
+    }
+    name = inputName.trim() || defaultName;
   }
 
   try {
     // 保存済みマッピング一覧を取得
     const { savedMappings = [] } = await chrome.storage.local.get('savedMappings');
 
-    // 新しいマッピングを作成
-    const timestamp = new Date();
-    const name = timestamp.toLocaleString('ja-JP', {
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
     const newMapping = {
       id: Date.now().toString(),
       name: name,
-      createdAt: timestamp.toISOString(),
+      createdAt: new Date().toISOString(),
       mappingTable: Object.fromEntries(currentMappingTable),
       itemCount: currentMappingTable.size
     };
@@ -360,7 +418,7 @@ async function saveMapping() {
     currentMappingName = newMapping.name;
     updateMappingStatus();
 
-    showToast(`対応表を保存しました（${currentMappingTable.size}件）`, 'success');
+    showToast(`「${name}」を保存しました（${currentMappingTable.size}件）`, 'success');
   } catch (error) {
     console.error('マッピング保存エラー:', error);
     showToast('保存に失敗しました', 'error');
