@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設定 - PrivacyShield for AI</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <!-- ヘッダー -->
+    <header class="options-header">
+      <div class="header-content">
+        <img src="../icons/icon48.png" alt="Logo" class="logo">
+        <div>
+          <h1>設定</h1>
+          <p class="subtitle">PrivacyShield for AI</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="options-main">
+      <!-- デフォルトパターン設定 -->
+      <section class="settings-section">
+        <h2 class="section-title">デフォルトマスキングパターン</h2>
+        <p class="section-description">検知・マスキングするパターンを選択してください</p>
+
+        <div class="pattern-list" id="defaultPatterns">
+          <label class="pattern-item">
+            <input type="checkbox" name="pattern" value="name" checked>
+            <span class="pattern-icon">👤</span>
+            <div class="pattern-info">
+              <span class="pattern-name">氏名</span>
+              <span class="pattern-description">日本語の姓名（山田太郎様など）</span>
+            </div>
+          </label>
+
+          <label class="pattern-item">
+            <input type="checkbox" name="pattern" value="email" checked>
+            <span class="pattern-icon">✉️</span>
+            <div class="pattern-info">
+              <span class="pattern-name">メールアドレス</span>
+              <span class="pattern-description">example@domain.com形式</span>
+            </div>
+          </label>
+
+          <label class="pattern-item">
+            <input type="checkbox" name="pattern" value="phone" checked>
+            <span class="pattern-icon">📞</span>
+            <div class="pattern-info">
+              <span class="pattern-name">電話番号</span>
+              <span class="pattern-description">090-1234-5678形式</span>
+            </div>
+          </label>
+
+          <label class="pattern-item">
+            <input type="checkbox" name="pattern" value="address" checked>
+            <span class="pattern-icon">📍</span>
+            <div class="pattern-info">
+              <span class="pattern-name">住所</span>
+              <span class="pattern-description">都道府県から始まる住所</span>
+            </div>
+          </label>
+
+          <label class="pattern-item">
+            <input type="checkbox" name="pattern" value="company" checked>
+            <span class="pattern-icon">🏢</span>
+            <div class="pattern-info">
+              <span class="pattern-name">企業名</span>
+              <span class="pattern-description">株式会社・有限会社など</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- カスタムパターン設定 -->
+      <section class="settings-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">カスタムパターン</h2>
+            <p class="section-description">独自の正規表現パターンを追加できます</p>
+          </div>
+          <button id="addPatternBtn" class="add-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            追加
+          </button>
+        </div>
+
+        <div class="custom-pattern-list" id="customPatterns">
+          <!-- カスタムパターンがここに追加される -->
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <p>カスタムパターンはまだありません</p>
+          <p class="hint">「追加」ボタンから独自のパターンを作成できます</p>
+        </div>
+      </section>
+
+      <!-- その他の設定 -->
+      <section class="settings-section">
+        <h2 class="section-title">その他の設定</h2>
+
+        <div class="option-list">
+          <label class="option-item">
+            <div class="option-info">
+              <span class="option-name">自動マスキング</span>
+              <span class="option-description">入力時に自動でマスキングを実行</span>
+            </div>
+            <input type="checkbox" id="autoMask" checked>
+          </label>
+
+          <label class="option-item">
+            <div class="option-info">
+              <span class="option-name">検知通知</span>
+              <span class="option-description">個人情報を検知したときに通知を表示</span>
+            </div>
+            <input type="checkbox" id="showNotifications" checked>
+          </label>
+        </div>
+      </section>
+
+      <!-- データ管理 -->
+      <section class="settings-section">
+        <h2 class="section-title">データ管理</h2>
+
+        <div class="data-actions">
+          <button id="exportBtn" class="secondary-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            設定をエクスポート
+          </button>
+          <button id="importBtn" class="secondary-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            設定をインポート
+          </button>
+          <button id="resetBtn" class="danger-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            設定をリセット
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- フッター -->
+    <footer class="options-footer">
+      <button id="saveBtn" class="save-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        保存
+      </button>
+      <span class="save-status" id="saveStatus"></span>
+    </footer>
+
+    <!-- カスタムパターン追加/編集モーダル -->
+    <div class="modal-overlay" id="patternModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modalTitle">カスタムパターンを追加</h3>
+          <button class="close-btn" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="patternKey">パターン名（英数字）</label>
+            <input type="text" id="patternKey" placeholder="employee_id">
+          </div>
+          <div class="form-group">
+            <label for="patternLabel">ラベル（マスキング時の表示名）</label>
+            <input type="text" id="patternLabel" placeholder="EmployeeID">
+          </div>
+          <div class="form-group">
+            <label for="patternRegex">正規表現</label>
+            <input type="text" id="patternRegex" placeholder="EMP-\d{6}">
+            <span class="form-hint">※ フラグ(g)は自動で付与されます</span>
+          </div>
+          <div class="form-group">
+            <label for="patternDescription">説明</label>
+            <input type="text" id="patternDescription" placeholder="社員番号（EMP-123456形式）">
+          </div>
+          <div class="form-group">
+            <label>テスト</label>
+            <input type="text" id="patternTest" placeholder="テスト文字列を入力...">
+            <div class="test-result" id="testResult"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelModalBtn" class="secondary-btn">キャンセル</button>
+          <button id="savePatternBtn" class="primary-btn">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- インポート用の隠しinput -->
+    <input type="file" id="importInput" accept=".json" style="display: none;">
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
