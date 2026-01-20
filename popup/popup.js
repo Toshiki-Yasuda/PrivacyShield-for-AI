@@ -104,12 +104,15 @@ function setPageStatusUnsupported(message) {
 async function openSidePanel() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id) {
-      await chrome.sidePanel.open({ tabId: tab.id });
+    if (tab?.windowId) {
+      // windowIdを使用してサイドパネルを開く
+      await chrome.sidePanel.open({ windowId: tab.windowId });
       window.close();
     }
   } catch (error) {
     console.error('サイドパネルを開けませんでした:', error);
+    // フォールバック: アラートで通知
+    alert('サイドパネルを開けませんでした。\nブラウザ右上のサイドパネルアイコンから開いてください。');
   }
 }
 
